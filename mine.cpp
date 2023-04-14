@@ -40,7 +40,7 @@ int main(int argc, char *argv[]) {
     std::cout << "Proc " << rank << ": " << nonce << "-" << endNonce << std::endl;
 
     while (nonce < endNonce) {
-        if (rank == 0) std::cout << "Work: " << nonce - startNonce << '\r';
+        if (rank == 0) std::cout << "Work: " << nonce - startNonce << std::endl;
     
         std::uint8_t data[64] = {0};
         for (size_t i=0; i<32; i++) {

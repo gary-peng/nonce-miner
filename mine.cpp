@@ -77,17 +77,19 @@ int main(int argc, char *argv[]) {
     // 0xe7e9033363B988d46fEa4cA7d80ecFc1215eD436
     uint256_t address = ((uint256_t) 0xe7e9033363B988d4 << 96) | ((uint256_t) 0x6fEa4cA7d80ecFc1 << 32) | ((uint256_t) 0x215eD436);
 
-    uint256_t searchSpace = (uint256_t) 1 << 32;
-    uint256_t load = searchSpace / (uint256_t) p;
-    uint256_t leftOff = 0;
-    uint256_t startNonce = rank * load;
+    uint256_t searchEnd = (uint256_t) 1 << 33;
+    uint256_t searchStart = (uint256_t) 1 << 32;
+    uint256_t load = (searchEnd-searchStart) / (uint256_t) p;
+    uint256_t startNonce = (rank * load) + searchStart;
     uint256_t endNonce;
     if (rank == p-1) {
-        endNonce = searchSpace;
+        endNonce = searchEnd;
     } else {
         endNonce = startNonce + load;
     }
     std::cout << "Proc " << rank << ": " << startNonce << "-" << endNonce << std::endl;
+
+    double startTime = MPI_Wtime();
 
     std::thread thrds[NUM_THREADS];
     for (int i=0; i<NUM_THREADS; i++){
@@ -100,14 +102,16 @@ int main(int argc, char *argv[]) {
             threadEndNonce = threadStartNonce + threadLoad;
         }
 
-        std::cout << "Proc " << rank << "|" << i << ": " << threadStartNonce << "-" << threadEndNonce << std::endl;
+        // std::cout << "Proc " << rank << "|" << i << ": " << threadStartNonce << "-" << threadEndNonce << std::endl;
 
-        thrds[i] = std::thread(hash, threadStartNonce, threadEndNonce, rank, i, address, mask, MPI_Wtime());
+        thrds[i] = std::thread(hash, threadStartNonce, threadEndNonce, rank, i, address, mask, startTime);
     }
     for (size_t i=0; i<NUM_THREADS; i++){
         thrds[i].join();
     }
 
+    double totalTime = MPI_Wtime()-startTime;
+    printf("Time: %.6f\n", totalTime);
 
 	MPI_Finalize();
 	return 0;
@@ -115,6 +119,7 @@ int main(int argc, char *argv[]) {
 
 /*
 mpicxx -o bin/mine *.cpp
-mpirun -np 4 bin/mine
+mpirun -np 4 bin/mine 10
+mpicxx -o bin/mine *.cpp -pthread
 85577470
 */

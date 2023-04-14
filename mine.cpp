@@ -27,8 +27,10 @@ int main(int argc, char *argv[]) {
     // std::cout << address << std::endl;
 
     uint256_t load = mask / (uint256_t) p;
+    uint256_t leftOff = 9400000;
     uint256_t nonce = rank * load;
     uint256_t startNonce = nonce;
+    nonce += leftOff;
     uint256_t endNonce;
     if (rank == p-1) {
         endNonce = mask;

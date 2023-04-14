@@ -5,7 +5,7 @@
 #include "Keccak256.hpp"
 #include "uint256_t.h"
 
-#define DIFF 22
+#define DIFF 33
 #define LEFT_OFF 0
 
 void printArr(std::uint8_t* arr, size_t size, std::string label) {
@@ -20,7 +20,8 @@ void hash(uint256_t threadStartNonce, uint256_t threadEndNonce, int rank, int th
     uint256_t nonce = threadStartNonce;
 
     while (nonce < threadEndNonce) {
-        if (rank == 0 && threadRank == 0) std::cout << "Work: " << nonce - threadStartNonce << std::endl;
+        uint256_t work = nonce - threadStartNonce;
+        if (rank == 0 && threadRank == 0 && work%50000 == 0) std::cout << "Work: " << nonce - threadStartNonce << std::endl;
     
         std::uint8_t data[64] = {0};
         for (size_t i=0; i<32; i++) {
@@ -77,8 +78,8 @@ int main(int argc, char *argv[]) {
     // 0xe7e9033363B988d46fEa4cA7d80ecFc1215eD436
     uint256_t address = ((uint256_t) 0xe7e9033363B988d4 << 96) | ((uint256_t) 0x6fEa4cA7d80ecFc1 << 32) | ((uint256_t) 0x215eD436);
 
-    uint256_t searchEnd = (uint256_t) 1 << 33;
-    uint256_t searchStart = (uint256_t) 1 << 32;
+    uint256_t searchEnd = ((uint256_t) 1 << 256) - 1;
+    uint256_t searchStart = 0;
     uint256_t load = (searchEnd-searchStart) / (uint256_t) p;
     uint256_t startNonce = (rank * load) + searchStart;
     uint256_t endNonce;
@@ -94,7 +95,7 @@ int main(int argc, char *argv[]) {
     std::thread thrds[NUM_THREADS];
     for (int i=0; i<NUM_THREADS; i++){
         uint256_t threadLoad = load / NUM_THREADS;
-        uint256_t threadStartNonce = (threadLoad * i) + startNonce;
+        uint256_t threadStartNonce = (threadLoad * i) + startNonce + LEFT_OFF;
         uint256_t threadEndNonce;
         if (i == NUM_THREADS-1) {
             threadEndNonce = endNonce;

@@ -42,12 +42,11 @@ int main(int argc, char *argv[]) {
 	MPI_Comm_size(comm, &p);
 	MPI_Comm_rank(comm, &rank);
 
-    uint64_t count = 0;
     Uint256 stepSize = Uint256(); 
     for (int i=0; i<p; i++) {
         stepSize.add(Uint256::ONE);
     }
-    Uint256 leftOff = Uint256("0000000000000000000000000000000000000000000000000000000002BDE780");
+    Uint256 leftOff = Uint256("000000000000000000000000000000000000000000000000000000ad3c98f780");
 
     Uint256 address = Uint256("000000000000000000000000e7e9033363B988d46fEa4cA7d80ecFc1215eD436");
     uint8_t addressArr[32];
@@ -81,20 +80,17 @@ int main(int argc, char *argv[]) {
     }
     printArr(nonceArr, 32, std::to_string(rank) + " starting nonce");
 
+    double prevTime = MPI_Wtime();
     while (true) {
         nonce.getBigEndianBytes(nonceArr);
         for (size_t i=0; i<32; i++) {
             data[i] = nonceArr[i];
         }
 
-        if (rank == 0 && count%100000 == 0) {
-            std::cout << "work: " << count << std::endl;
+        if (rank == 0 && MPI_Wtime()-prevTime >= 1) {
             printArr(nonceArr, 32, std::to_string(rank) + " nonce");
+            prevTime = MPI_Wtime();
         }
-
-        // if (count < 3) {
-        //     printArr(nonceArr, 32, std::to_string(rank) + " nonce");
-        // }
 
         Keccak256::getHash(data, 64, hash);
 
@@ -107,7 +103,6 @@ int main(int argc, char *argv[]) {
             break;
         }
 
-        count++;
         nonce.add(stepSize);
     }
 
@@ -121,5 +116,7 @@ mpicxx -o bin/mine *.cpp
 mpirun -np 120 bin/mine
 mpicxx -o bin/mine *.cpp -pthread
 
-46000000
+42: 000000000000000000000000000000000000000000000000000000ad3c98f780
+41: 239700000   0000000000000000000000000000000000000000000000000000000039262080
+40: 563000000   00000000000000000000000000000000000000000000000000000000863acb00
 */

@@ -4,8 +4,6 @@
 #include "Keccak256.hpp"
 #include "Uint256.hpp"
 
-#define DIFF 41
-
 void printArr(uint8_t* arr, size_t size, std::string label) {
     std::cout << label + ": ";
     for (size_t i=0; i<size; i++) {
@@ -46,7 +44,7 @@ int main(int argc, char *argv[]) {
     for (int i=0; i<p; i++) {
         stepSize.add(Uint256::ONE);
     }
-    Uint256 leftOff = Uint256("0000000000000000000000000000000000000000000000000000000374d3744c");
+    Uint256 leftOff = Uint256(argv[2]);
 
     Uint256 address = Uint256("000000000000000000000000e7e9033363B988d46fEa4cA7d80ecFc1215eD436");
     uint8_t addressArr[32];
@@ -66,7 +64,8 @@ int main(int argc, char *argv[]) {
     nonce.getBigEndianBytes(nonceArr);  
 
     Uint256 mask = Uint256(Uint256::ONE);
-    for (size_t i=0; i<DIFF; i++) {
+    int DIFF = atoi(argv[1]);
+    for (int i=0; i<DIFF; i++) {
         mask.shiftLeft1();
     }
     mask.subtract(Uint256::ONE);
@@ -78,7 +77,7 @@ int main(int argc, char *argv[]) {
         printf("step size: %d\n", stepSize.value[0]);
         std::cout << "================================================================================" << std::endl;
     }
-    printArr(nonceArr, 32, std::to_string(rank) + " starting nonce");
+    // printArr(nonceArr, 32, std::to_string(rank) + " starting nonce");
 
     double prevTime = MPI_Wtime();
     while (true) {

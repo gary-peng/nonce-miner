@@ -102,7 +102,7 @@ int main(int argc, char *argv[]) {
         }
 
         if (rank == 0 && MPI_Wtime()-prevTime >= 1) {
-            printArr(nonceArr, 32, std::to_string(rank) + " nonce");
+            printArr(nonceArr, 32, "Proc " + std::to_string(rank) + " nonce");
             prevTime = MPI_Wtime();
         }
 

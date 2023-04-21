@@ -40,11 +40,11 @@ int main(int argc, char *argv[]) {
 	MPI_Comm_size(comm, &p);
 	MPI_Comm_rank(comm, &rank);
 
-    Uint256 stepSize = Uint256(); 
-    for (int i=0; i<p; i++) {
-        stepSize.add(Uint256::ONE);
-    }
-    Uint256 leftOff = Uint256(argv[2]);
+    Uint256 stepSize = Uint256(Uint256::ZERO);
+    stepSize.value[0] = (uint32_t) p; 
+
+    Uint256 leftOff = Uint256(Uint256::ZERO);
+    if (argc == 3) leftOff = Uint256(argv[2]);
 
     Uint256 address = Uint256("000000000000000000000000e7e9033363B988d46fEa4cA7d80ecFc1215eD436");
     uint8_t addressArr[32];
@@ -79,8 +79,23 @@ int main(int argc, char *argv[]) {
     }
     // printArr(nonceArr, 32, std::to_string(rank) + " starting nonce");
 
+    uint8_t found = 0;
     double prevTime = MPI_Wtime();
     while (true) {
+        if (found == 1) {
+            if (rank == 0) {
+                MPI_Recv(nonceArr, 32, MPI_UINT8_T, MPI_ANY_SOURCE, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+
+                std::cout << "================================================================================" << std::endl;
+                printArr(data, 64, "DATA");
+                printArr(hash, Keccak256::HASH_LEN, "HASH");
+                printArr(nonceArr, 32, "FOUND NONCE");
+                std::cout << "================================================================================" << std::endl;
+            }
+
+            break;
+        }
+
         nonce.getBigEndianBytes(nonceArr);
         for (size_t i=0; i<32; i++) {
             data[i] = nonceArr[i];
@@ -94,18 +109,14 @@ int main(int argc, char *argv[]) {
         Keccak256::getHash(data, 64, hash);
 
         if (check(hash, mask)) {
-            std::cout << "================================================================================" << std::endl;
-            printArr(data, 64, "DATA");
-            printArr(hash, Keccak256::HASH_LEN, "HASH");
-            printArr(nonceArr, 32, std::to_string(rank) + " FOUND NONCE");
-            std::cout << "================================================================================" << std::endl;
-            break;
+            found = 1;
+            MPI_Bcast(&found, 1, MPI_UINT8_T, rank, comm);
+            MPI_Send(nonceArr, 32, MPI_UINT8_T, 0, 0, MPI_COMM_WORLD);
         }
 
         nonce.add(stepSize);
     }
 
-    MPI_Abort(comm, MPI_SUCCESS);
 	MPI_Finalize();
 	return 0;
 }
@@ -113,16 +124,16 @@ int main(int argc, char *argv[]) {
 /*
 mpicxx -o bin/mine *.cpp
 mpirun -np 120 bin/mine 44
-mpirun -np 48 bin/mine 44
-mpicxx -o bin/mine *.cpp -pthread
+mpirun -np 4 bin/mine 20
+mpirun -np 48 nonce-miner/bin/mine 44
 
-44 (1): 000000000000000000000000000000000000000000000000000008ffd84378ac
-44 (2): 00000000000000000000000000000000000000000000000080000579cd260bca                                                    
-44 (3): 000000000000000000000000000000000000000000000001000005d93b603bbc
+44 (1): 00000000000000000000000000000000000000000000000000000a9e43fb0cf4
+44 (2): 00000000000000000000000000000000000000000000000080000717fc1398ea                                                    
+44 (3): 000000000000000000000000000000000000000000000001000007783680261c
 
-44 (4): 0000000000000000000000000000000000000000000000018000010407df52a0
-44 (5): 000000000000000000000000000000000000000000000002000001033a928c60
-44 (6): 00000000000000000000000000000000000000000000000280000102df740030
+44 (4): 000000000000000000000000000000000000000000000001800001caa14ca270
+44 (5): 000000000000000000000000000000000000000000000002000001f1dec95aa0
+44 (6): 000000000000000000000000000000000000000000000002800001f06cef1530
 
 44 (7): 000000000000000000000000000000000000000000000003000000fdb1c11c90
 44 (8): 000000000000000000000000000000000000000000000003800000fb334e1360

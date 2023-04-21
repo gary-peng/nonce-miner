@@ -10,8 +10,6 @@
 
 #include <cstdint>
 
-class FieldInt;  // Forward declaration
-
 
 /* 
  * An unsigned 256-bit integer, represented as eight unsigned 32-bit words in little endian.
@@ -52,11 +50,6 @@ class Uint256 {
 	public: explicit Uint256(const std::uint8_t b[NUM_WORDS * 4]);
 	
 	
-	// Constructs a Uint256 from the given FieldInt. Constant-time with respect to the given value.
-	// All possible FieldInt values are valid.
-	public: explicit Uint256(const FieldInt &val);
-	
-	
 	
 	/*---- Arithmetic methods ----*/
 	
@@ -81,24 +74,6 @@ class Uint256 {
 	// Enable must be 1 to perform the operation or 0 to do nothing.
 	// Constant-time with respect to this value and the enable.
 	public: void shiftRight1(std::uint32_t enable=1);
-	
-	
-	// Computes the multiplicative inverse of this number with respect to the given modulus.
-	// The modulus must be odd and coprime to this number. This number must be less than the modulus.
-	// If this number is zero, the reciprocal is zero. Constant-time with respect to this value.
-	public: void reciprocal(const Uint256 &modulus);
-	
-	
-	/*---- Miscellaneous methods ----*/
-	
-	// Copies the given number into this number if enable is 1, or does nothing if enable is 0.
-	// Constant-time with respect to both values and the enable.
-	public: void replace(const Uint256 &other, std::uint32_t enable);
-	
-	
-	// Swaps the value of this number with the given number if enable is 1, or does nothing if enable is 0.
-	// Constant-time with respect to both values and the enable.
-	public: void swap(Uint256 &other, std::uint32_t enable);
 	
 	
 	// Writes this 256-bit integer as 32 bytes encoded in big endian to the given array.
@@ -135,6 +110,3 @@ class Uint256 {
 	public: static const Uint256 ONE;
 	
 };
-
-
-#include "FieldInt.hpp"
